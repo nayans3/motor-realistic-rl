@@ -2,12 +2,18 @@
 
 **Training legged robots for real motors, not ideal ones.**
 
+<p align="center">
+  <img src="results/go1_baseline.gif" alt="Simulated Unitree Go1 walking under the baseline policy" width="480">
+  <br>
+  <em>Baseline: Go1 walking with a policy trained on ideal motors.</em>
+</p>
+
 Most simulated robot policies assume perfect motors: instant torque, no current limits, no delay. This project adds an electrical model of the motors to a simulated Unitree Go1 quadruped and asks two questions:
 
 1. Which electrical effects break a policy trained with ideal motors, and by how much?
 2. Does training with a realistic motor model bring the robustness back?
 
-> **Status:** in progress (started November 2026). Baseline training is being set up; no results yet.
+> **Status:** in progress (started November 2026). The baseline policy with ideal motors is trained; the motor model is next.
 
 ## How it works
 
@@ -29,6 +35,14 @@ The simulator stays standard. The work is in the two models between the policy a
 
 **Sensor model:** encoder quantization and sensor delay.
 
+## Results so far
+
+| Run | GPU | Training time | Final reward per episode |
+| --- | --- | --- | --- |
+| Baseline: Go1 joystick task, ideal motors, 200M environment steps | Colab T4 | 52 min (plus 3 min compile) | about 28.6 |
+
+The reward rose quickly and leveled off well before 200M steps. This run is the reference that every motor-model experiment is compared against.
+
 ## Planned experiments
 
 | # | Experiment | Result it produces |
@@ -44,6 +58,7 @@ The simulator stays standard. The work is in the two models between the policy a
 | Path | What it is |
 | --- | --- |
 | `learning/notebooks/locomotion.ipynb` | Baseline Go1 training notebook (runs on Colab) |
+| `results/` | Videos and figures from finished runs |
 
 The motor model, environment wrapper, experiment scripts and tests will be added as the project progresses.
 
