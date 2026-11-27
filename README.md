@@ -13,7 +13,7 @@ Most simulated robot policies assume perfect motors: instant torque, no current 
 1. Which electrical effects break a policy trained with ideal motors, and by how much?
 2. Does training with a realistic motor model bring the robustness back?
 
-> **Status:** in progress (started November 2026). The baseline policy with ideal motors is trained; the motor model is next.
+> **Status:** in progress (started November 2026). Baseline policy trained and measured; motor model built and unit-tested; plugging it into the simulator is next.
 
 ## How it works
 
@@ -34,6 +34,18 @@ The simulator stays standard. The work is in the two models between the policy a
 - Motor heating and torque derating
 
 **Sensor model:** encoder quantization and sensor delay.
+
+## The motor model
+
+Built from the published specs of the Go1's joint motor (Unitree GO-M8010-6: 23.7 N·m peak, 0.639 N·m/A torque constant, 40 A peak current, 30 rad/s at 24 V; knees geared 1.5× to 35.55 N·m). Values Unitree doesn't publish (winding resistance, inductance, thermal constants) are explicit, documented estimates in [`motor_model/params.py`](motor_model/params.py).
+
+<p align="center">
+  <img src="results/torque_speed_curve.png" alt="Torque-speed curves: the ideal simulator gives full torque at any speed; the motor model loses torque above about 20 rad/s (hip/thigh) and 13 rad/s (knee), and sooner on a low battery" width="640">
+</p>
+
+The "ideal" simulator already caps torque, but at **every** speed. A real motor's back-EMF eats into the battery voltage as it spins, so torque falls off above about 20 rad/s at the hip and thigh, and about 13 rad/s at the knee. A sagging battery makes it worse.
+
+**Checking a key assumption:** the model treats motor current as instant within each 4 ms physics step. [`verify_current_model.py`](motor_model/verify_current_model.py) tests this against a 5 µs simulation of the winding and the driver's current loop: the torque error is 1.3% at the estimated inductance and stays under 5% across the whole plausible range (0.1–1 mH).
 
 ## Results so far
 
@@ -57,19 +69,24 @@ The reward rose quickly and leveled off well before 200M steps. This run is the 
 
 | Path | What it is |
 | --- | --- |
+| `motor_model/` | The motor model (JAX), its parameters and the current-model check |
+| `tests/` | Unit tests: one per physical behavior (torque-speed curve, battery sag, heating, ...) |
 | `learning/notebooks/locomotion.ipynb` | Baseline Go1 training notebook (runs on Colab) |
+| `learning/notebooks/evaluate_baseline.ipynb` | Measures a policy: falls, tracking error, torque |
+| `scripts/` | Figure scripts |
 | `results/` | Videos and figures from finished runs |
 
-The motor model, environment wrapper, experiment scripts and tests will be added as the project progresses.
+The environment wrapper and experiment scripts will be added as the project progresses.
 
 ## Running it
 
 **Training (Google Colab, GPU):** [open the notebook in Colab](https://colab.research.google.com/github/nayans3/motor-realistic-rl/blob/main/learning/notebooks/locomotion.ipynb), set the runtime to GPU, and run the cells in order.
 
-**Local development (motor model and tests):** Python 3.12 with
+**Local development (motor model and tests):** Python 3.12, then from the repo root
 
 ```
-pip install mujoco numpy scipy matplotlib pytest
+pip install -r requirements.txt
+python -m pytest
 ```
 
 ## Credits

@@ -1,0 +1,5 @@
+# Local development (motor model + tests). Training runs in Colab notebooks.
+jax
+numpy
+matplotlib
+pytest
